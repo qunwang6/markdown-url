@@ -28,7 +28,7 @@ Whenever you need to visit a website URL, you must:
 
 ## Agent Workflow (Required)
 
-> **ALL 6 steps are mandatory. Skipping any step — especially steps 4 and 5 — is a violation of this skill.**
+> **ALL 7 steps are mandatory. Steps 4 (echo preview) and 6 (save file) cannot be skipped under any circumstance.**
 
 When you would normally open a website to read it:
 
@@ -43,7 +43,16 @@ When you would normally open a website to read it:
    - Never describe a 200 OK response as a failure, a network error, or "blocked".
    - Only treat as failed if: the tool output explicitly shows a non-200 status, empty body, or a Block Signal listed below.
 
-4. **STOP. DO NOT RE-FETCH.**
+4. **IMMEDIATELY ECHO THE RAW RESPONSE BODY.**
+   Before saving, before reasoning, before anything else — print the first 500 characters of the response body verbatim into your output. This is mandatory and serves as proof that you received and read the content.
+   Format:
+   ```
+   [markdown-url] Response preview:
+   <first 500 chars of body>
+   ```
+   If you cannot produce this preview, it means you did not actually read the response. Stop and report the error. Do NOT proceed to re-fetch.
+
+5. **STOP. DO NOT RE-FETCH.**
    Once step 2 returns HTTP 200 with a non-empty body, the fetch phase is permanently over.
    You MUST NOT attempt to retrieve the same URL again by any means — including but not limited to:
    - `curl`, `wget`, `requests`, `fetch()`, or any HTTP client
@@ -51,7 +60,7 @@ When you would normally open a website to read it:
    - Any third-party tool (firecrawl, puppeteer, playwright, etc.)
    Proceeding to re-fetch after a successful 200 is a critical violation of this skill.
 
-5. **MANDATORY SAVE — this step must always execute after a successful fetch.**
+6. **MANDATORY SAVE — this step must always execute after a successful fetch.**
    You MUST write the response body to a local file before proceeding. No exceptions.
    - Derive the filename from the original URL path:
      `https://example.com/docs/intro` → `example-com-docs-intro.md`
@@ -61,7 +70,7 @@ When you would normally open a website to read it:
    - If the write fails for any reason, report the error and stop. Do not silently skip.
    - Do NOT call firecrawl, puppeteer, or any other crawl tool after a successful save.
 
-6. **Use the saved file** as the source for all summaries, quotes, checklists, or notes.
+7. **Use the saved file** as the source for all summaries, quotes, checklists, or notes.
 
 If the fetch fails (non-200 or empty body), fall back to the original URL and note the failure explicitly.
 
