@@ -20,6 +20,8 @@ https://markdown.new/<原始URL>
 
 相比直接抓取原始 HTML，这样做的好处是：内容更干净、结构更清晰、易于提取摘要或笔记。
 
+网页内容统一使用 [`agent-browser`](https://github.com/vercel-labs/agent-browser) 获取：Agent 通过它打开代理 URL、等待页面加载完成，并提取 `body` 文本；不使用 `curl`、`wget` 或其他 HTTP 客户端。
+
 ---
 
 ## 文件结构
@@ -50,8 +52,8 @@ npx skills add https://github.com/am-will/codex-skills --skill markdown-url
 | 步骤 | 动作 |
 |------|------|
 | 1 | 将目标 URL 重写为 `defuddle.md` 前缀形式 |
-| 2 | 访问 Defuddle 重写后的 URL（而非原始地址） |
-| 3 | Defuddle 失败时，使用相同目标 URL 的 `markdown.new` 前缀形式重试一次 |
+| 2 | 使用 `agent-browser` 访问 Defuddle 重写后的 URL（而非原始地址），等待加载完成后提取 `body` 文本 |
+| 3 | Defuddle 失败时，使用 `agent-browser` 以相同目标 URL 的 `markdown.new` 前缀形式重试一次 |
 | 4 | 判断成功：**HTTP 200 + 有内容 = 成功**，不以内容大小或格式判断；随后立即输出响应前 500 个字符的原文预览 |
 | 5 | 成功响应后停止抓取，不得再次请求同一 URL |
 | 6 | **强制保存**响应内容到本地 `.md` 文件，并打印确认信息 |
@@ -120,7 +122,7 @@ A：这是早期版本的问题。当前 SKILL.md 已将保存步骤设为独立
 A：这是 Agent 误判了成功标准。当前版本已在第 4 步明确：判断成功的唯一依据是 HTTP 状态码和响应体是否非空，与内容格式无关。
 
 **Q：可以用 firecrawl 或 puppeteer 补充抓取吗？**  
-A：不可以。成功保存后禁止调用任何第三方爬取工具，避免重复抓取和不必要的失败。
+A：不可以。此 Skill 统一使用 `agent-browser` 获取网页内容；成功保存后禁止调用其他第三方爬取工具，避免重复抓取和不必要的失败。
 
 ---
 

@@ -16,6 +16,20 @@ Whenever you need to visit a website URL, you must:
 3) if that fetch fails, retry once through `https://markdown.new/`, and
 4) pull the Markdown content from the first successful response for use in your answer/notes.
 
+## Fetch Tool (Required)
+
+Use `agent-browser` to retrieve proxied pages. Do not use `curl`, `wget`, `requests`, `fetch()`, or another HTTP client for this workflow.
+
+For each proxy attempt:
+
+```bash
+agent-browser open <rewritten-url>
+agent-browser wait --load networkidle
+agent-browser get text body
+```
+
+Use the text returned by `agent-browser get text body` as the response body for previewing, saving, and subsequent notes. If navigation, load, or text extraction fails, treat that proxy attempt as failed and proceed to the next fallback.
+
 ## Rewrite Rule
 
 1. Normalize the destination into an absolute URL with a scheme (`https://` preferred).
@@ -41,7 +55,7 @@ When you would normally open a website to read it:
 
 1. **Rewrite the URL.** Produce the `defuddle.md`-prefixed URL (see Rewrite Rule).
 
-2. **Fetch the Defuddle URL** (not the original), unless the Policy below says to skip. If it fails, fetch the `markdown.new` backup URL once before using the original URL.
+2. **Fetch the Defuddle URL with `agent-browser`** (not the original), unless the Policy below says to skip. Run `open`, wait for network idle, and extract `body` text. If it fails, fetch the `markdown.new` backup URL once with the same tool before using the original URL.
 
 3. **Determine success. HTTP 200 + any non-empty body = SUCCESS. Full stop.**
    - Do NOT judge by content size, cleanliness, or format.
@@ -62,7 +76,7 @@ When you would normally open a website to read it:
 5. **STOP. DO NOT RE-FETCH.**
    Once step 2 returns HTTP 200 with a non-empty body, the fetch phase is permanently over.
    You MUST NOT attempt to retrieve the same URL again by any means — including but not limited to:
-   - `curl`, `wget`, `requests`, `fetch()`, or any HTTP client
+   - `curl`, `wget`, `requests`, `fetch()`, or any HTTP client other than `agent-browser`
    - Bash/shell commands
    - Any third-party tool (firecrawl, puppeteer, playwright, etc.)
    Proceeding to re-fetch after a successful 200 is a critical violation of this skill.
@@ -124,5 +138,5 @@ If the tool output shows `200 OK`, you MUST NOT report any other status code (40
 
 ## Notes / Exceptions
 
-- Keep this for reading/browsing. For API endpoints, OAuth flows, file uploads, or anything that depends on cookies/login state, use the original URL if the proxy breaks functionality.
+- Keep this for reading/browsing. Fetch proxy pages with `agent-browser`; for API endpoints, OAuth flows, file uploads, or anything that depends on cookies/login state, use the original URL if the proxy breaks functionality.
 - Do not rewrite local paths (`./README.md`) or non-HTTP(S) schemes.
