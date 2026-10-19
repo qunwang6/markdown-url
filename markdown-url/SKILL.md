@@ -28,7 +28,7 @@ agent-browser wait --load networkidle
 agent-browser get text body
 ```
 
-Use the text returned by `agent-browser get text body` as the response body for previewing, saving, and subsequent notes. If navigation, load, or text extraction fails, treat that proxy attempt as failed and proceed to the next fallback.
+Use the text returned by `agent-browser get text body` as the response body for previewing, temporary saving, and subsequent notes. If navigation, load, or text extraction fails, treat that proxy attempt as failed and proceed to the next fallback.
 
 ## Rewrite Rule
 
@@ -49,7 +49,7 @@ When the Defuddle fetch fails, prefix the same normalized URL with `https://mark
 
 ## Agent Workflow (Required)
 
-> **ALL 7 steps are mandatory. Steps 4 (echo preview) and 6 (save file) cannot be skipped under any circumstance.**
+> **ALL 7 steps are mandatory. Steps 4 (echo preview) and 6 (save a temporary file) cannot be skipped under any circumstance.**
 
 When you would normally open a website to read it:
 
@@ -81,17 +81,18 @@ When you would normally open a website to read it:
    - Any third-party tool (firecrawl, puppeteer, playwright, etc.)
    Proceeding to re-fetch after a successful 200 is a critical violation of this skill.
 
-6. **MANDATORY SAVE — this step must always execute after a successful fetch.**
-   You MUST write the response body to a local file before proceeding. No exceptions.
+6. **MANDATORY TEMPORARY SAVE — this step must always execute after a successful fetch.**
+   You MUST write the response body to a local temporary file before proceeding. No exceptions.
    - Derive the filename from the original URL path:
      `https://example.com/docs/intro` → `example-com-docs-intro.md`
      root path → `index.md`
-   - Save to `.markdown-cache/` if that directory exists, otherwise save to the current working directory.
+   - **Never save the response body in the current working directory or anywhere under the project/workspace.** Save it in the system temporary directory instead, such as `${TMPDIR:-/tmp}/markdown-url/`. Create that directory if needed.
+   - Do not create or use `.markdown-cache/` in the current project.
    - Confirm the save by printing: `[markdown-url] Saved → <filepath> (<N> bytes)`
    - If the write fails for any reason, report the error and stop. Do not silently skip.
    - Do NOT call firecrawl, puppeteer, or any other crawl tool after a successful save.
 
-7. **Use the saved file** as the source for all summaries, quotes, checklists, or notes.
+7. **Use the temporary saved file** as the source for all summaries, quotes, checklists, or notes.
 
 If both proxy fetches fail (non-200 or empty body), fall back to the original URL and note the failures explicitly.
 
